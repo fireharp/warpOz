@@ -18,6 +18,7 @@ only shared dispatcher. `docs/oz.md` owns the local-to-cloud operating flow;
 - `make local PLAYGROUND=<name>`: execute one live native Claude or Codex run.
 - `make api-check`: verify authenticated Warp API reachability without exposing
   credentials or run data.
+- `make runs`: list captured local and Warp-hosted run records.
 - `make oz-create OZ_REPO=owner/repo`: register the shared personal Oz
   environment.
 - `make oz-run PLAYGROUND=<name> OZ_ENVIRONMENT_ID=<id>`: dispatch one scenario
@@ -38,6 +39,8 @@ keys, Warp keys, Claude state, Codex state, or playground runtime output.
 Every playground needs an independent verifier and an offline contract test.
 Contract tests must not call a model or network. A live provider run supplements
 these tests but does not replace them. Run `make test` before handoff.
+Keep raw transcripts in ignored `artifacts/runs/`; commit only sanitized evidence
+records that contain no prompts, source content, or credentials.
 
 ## Commit & Pull Request Guidelines
 

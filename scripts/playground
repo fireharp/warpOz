@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -11,12 +12,15 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAYGROUNDS = ROOT / "playgrounds"
+RUNS = Path(os.environ.get("PLAYGROUND_RUNS_DIR", ROOT / "artifacts" / "runs"))
 REQUIRED = {
     "name",
     "task",
@@ -26,6 +30,7 @@ REQUIRED = {
     "local_command",
     "contract_test_command",
     "cloud_prompt_file",
+    "artifact_paths",
 }
 HARNESSES = {"claude", "codex"}
 AUTH = {
@@ -64,6 +69,11 @@ def load_catalog() -> dict[str, tuple[Path, dict[str, Any]]]:
             value = manifest[field]
             if not isinstance(value, list) or not value or not all(isinstance(item, str) for item in value):
                 errors.append(f"{manifest_path.relative_to(ROOT)}: {field} must be a string array")
+        artifacts = manifest["artifact_paths"]
+        if not isinstance(artifacts, list) or not artifacts or not all(isinstance(item, str) for item in artifacts):
+            errors.append(f"{manifest_path.relative_to(ROOT)}: artifact_paths must be a non-empty string array")
+        elif any(Path(item).is_absolute() or ".." in Path(item).parts for item in artifacts):
+            errors.append(f"{manifest_path.relative_to(ROOT)}: artifact_paths must stay inside the playground")
         prompt = directory / manifest["cloud_prompt_file"]
         if not prompt.is_file():
             errors.append(f"{manifest_path.relative_to(ROOT)}: missing {manifest['cloud_prompt_file']}")
@@ -87,6 +97,137 @@ def select(name: str) -> tuple[Path, dict[str, Any]]:
 def run(command: list[str], *, cwd: Path = ROOT) -> int:
     print(f"+ {shlex.join(command)}", flush=True)
     return subprocess.run(command, cwd=cwd, check=False).returncode
+
+
+def digest(path: Path) -> str:
+    result = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            result.update(chunk)
+    return result.hexdigest()
+
+
+def capture_artifacts(
+    directory: Path, manifest: dict[str, Any], run_directory: Path
+) -> list[dict[str, Any]]:
+    captured = []
+    for relative in manifest["artifact_paths"]:
+        source = directory / relative
+        if not source.is_file():
+            continue
+        target = run_directory / "outputs" / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        captured.append(
+            {
+                "source": relative,
+                "copy": str(target.relative_to(run_directory)),
+                "bytes": target.stat().st_size,
+                "sha256": digest(target),
+            }
+        )
+    return captured
+
+
+def json_field(value: Any, names: tuple[str, ...]) -> Any:
+    if isinstance(value, dict):
+        for name in names:
+            if value.get(name) is not None:
+                return value[name]
+        for child in value.values():
+            found = json_field(child, names)
+            if found is not None:
+                return found
+    elif isinstance(value, list):
+        for child in value:
+            found = json_field(child, names)
+            if found is not None:
+                return found
+    return None
+
+
+def oz_result_fields(console: Path) -> dict[str, Any]:
+    for line in reversed(console.read_text(encoding="utf-8", errors="replace").splitlines()):
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        return {
+            "provider_run_id": json_field(value, ("run_id", "task_id")),
+            "provider_state": json_field(value, ("state", "status")),
+            "session_link": json_field(value, ("session_link",)),
+        }
+    return {}
+
+
+def run_observed(
+    command: list[str],
+    *,
+    directory: Path,
+    manifest: dict[str, Any],
+    execution: str,
+    safe_command: list[str] | None = None,
+) -> int:
+    started = datetime.now(UTC)
+    stamp = started.strftime("%Y%m%dT%H%M%S.%fZ")
+    run_id = f"{stamp}-{execution}-{manifest['name']}"
+    run_directory = RUNS / run_id
+    run_directory.mkdir(parents=True, exist_ok=False)
+    console = run_directory / "console.log"
+    shown = safe_command or command
+    print(f"+ {shlex.join(shown)}", flush=True)
+
+    before = time.monotonic()
+    exit_code = 127
+    with console.open("w", encoding="utf-8") as log:
+        try:
+            process = subprocess.Popen(
+                command,
+                cwd=directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                errors="replace",
+            )
+        except OSError as error:
+            line = f"error: {error}\n"
+            print(line, end="", file=sys.stderr)
+            log.write(line)
+        else:
+            assert process.stdout is not None
+            for line in process.stdout:
+                print(line, end="")
+                log.write(line)
+            exit_code = process.wait()
+    finished = datetime.now(UTC)
+    captured = capture_artifacts(directory, manifest, run_directory)
+    metadata: dict[str, Any] = {
+        "schema_version": 1,
+        "run_id": run_id,
+        "playground": manifest["name"],
+        "task": manifest["task"],
+        "harness": manifest["harness"],
+        "execution": execution,
+        "status": "succeeded" if exit_code == 0 else "failed",
+        "exit_code": exit_code,
+        "started_at": started.isoformat().replace("+00:00", "Z"),
+        "finished_at": finished.isoformat().replace("+00:00", "Z"),
+        "duration_seconds": round(time.monotonic() - before, 3),
+        "command": shown,
+        "console_log": "console.log",
+        "artifacts": captured,
+    }
+    if execution == "warp-hosted":
+        metadata.update({key: value for key, value in oz_result_fields(console).items() if value is not None})
+    (run_directory / "run.json").write_text(
+        json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
+    )
+    try:
+        shown_run_directory = run_directory.relative_to(ROOT)
+    except ValueError:
+        shown_run_directory = run_directory
+    print(f"run artifact: {shown_run_directory}/run.json")
+    return exit_code
 
 
 def oz_binary() -> str:
@@ -150,7 +291,12 @@ def command_check(args: argparse.Namespace) -> int:
 
 def command_local(args: argparse.Namespace) -> int:
     directory, manifest = select(args.name)
-    return run(manifest["local_command"], cwd=directory)
+    return run_observed(
+        manifest["local_command"],
+        directory=directory,
+        manifest=manifest,
+        execution="local",
+    )
 
 
 def command_verify(args: argparse.Namespace) -> int:
@@ -191,7 +337,64 @@ def command_oz(args: argparse.Namespace) -> int:
         safe[safe.index("--prompt") + 1] = f"<{manifest['cloud_prompt_file']}>"
         print(shlex.join(safe))
         return 0
-    return run(command)
+    safe = command.copy()
+    safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
+    safe[safe.index("--prompt") + 1] = f"<{manifest['cloud_prompt_file']}>"
+    return run_observed(
+        command,
+        directory=ROOT,
+        manifest=manifest,
+        execution="warp-hosted",
+        safe_command=safe,
+    )
+
+
+def load_runs() -> list[dict[str, Any]]:
+    results = []
+    for path in sorted(RUNS.glob("*/run.json"), reverse=True):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        value["_path"] = path
+        results.append(value)
+    return results
+
+
+def command_runs(_: argparse.Namespace) -> int:
+    rows = []
+    for value in load_runs():
+        rows.append(
+            (
+                value["run_id"],
+                value["execution"],
+                value["status"],
+                value["playground"],
+                str(value["duration_seconds"]),
+                str(value.get("provider_run_id") or "-"),
+            )
+        )
+    if not rows:
+        print("no captured runs")
+        return 0
+    headers = ("RUN ID", "EXECUTION", "STATUS", "PLAYGROUND", "SECONDS", "OZ RUN")
+    widths = [max(len(headers[i]), *(len(row[i]) for row in rows)) for i in range(len(headers))]
+    print("  ".join(headers[i].ljust(widths[i]) for i in range(len(headers))))
+    for row in rows:
+        print("  ".join(row[i].ljust(widths[i]) for i in range(len(row))))
+    return 0
+
+
+def command_show(args: argparse.Namespace) -> int:
+    matches = [value for value in load_runs() if value["run_id"].startswith(args.run_id)]
+    if not matches:
+        raise CatalogError(f"run not found: {args.run_id}")
+    if len(matches) > 1:
+        raise CatalogError(f"run id prefix is ambiguous: {args.run_id}")
+    value = matches[0].copy()
+    value.pop("_path", None)
+    print(json.dumps(value, indent=2))
+    return 0
 
 
 def command_oz_create(args: argparse.Namespace) -> int:
@@ -237,6 +440,11 @@ def parser() -> argparse.ArgumentParser:
     sub = result.add_subparsers(dest="command", required=True)
     list_parser = sub.add_parser("list", help="list task-named playgrounds")
     list_parser.set_defaults(func=command_list)
+    runs = sub.add_parser("runs", help="list captured local and Oz run artifacts")
+    runs.set_defaults(func=command_runs)
+    show = sub.add_parser("show", help="show one captured run record")
+    show.add_argument("run_id")
+    show.set_defaults(func=command_show)
     check = sub.add_parser("check", help="validate manifests and run offline contracts")
     check.add_argument("--manifest-only", action="store_true")
     check.set_defaults(func=command_check)

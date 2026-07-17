@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-warp-api-reachability",
+  "recorded_at": "2026-07-17T15:06:10Z",
+  "execution": "warp-hosted-control-plane",
+  "authentication": "onecli-managed",
+  "request": "GET /api/v1/agent/runs?limit=1",
+  "http_status": 200,
+  "response_contract": {
+    "runs": "array",
+    "page_info": "present"
+  },
+  "returned_run_count": 0,
+  "status": "passed"
+}

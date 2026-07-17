@@ -6,5 +6,9 @@
   "estimated_minutes": 2,
   "local_command": ["./scripts/run.sh"],
   "contract_test_command": ["./tests/test.sh"],
-  "cloud_prompt_file": "oz-prompt.md"
+  "cloud_prompt_file": "oz-prompt.md",
+  "artifact_paths": [
+    "run/workspace/output.json",
+    "run/claude-result.json"
+  ]
 }

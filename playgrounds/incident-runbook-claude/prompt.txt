@@ -16,7 +16,8 @@ The runbook must contain these headings in order:
 Under Situation, emit bullets for Severity, Service, Region, Started, and
 Customer impact in that order. Under Evidence, emit one bullet per observation
 in CSV order using `<signal> is <value> (threshold: <threshold>).` Under
-Immediate response, emit the four approved actions in service-context order.
+Immediate response, emit the four approved actions in service-context order as
+a numbered Markdown list (`1.` through `4.`).
 Format them as `Page <team> through PagerDuty service \`<route>\`.`, `Freeze
 <service> deployments.`, `Compare payments-gateway timeouts between <region>
 and us-east.`, and `If payments-gateway timeouts remain above <threshold> for 10

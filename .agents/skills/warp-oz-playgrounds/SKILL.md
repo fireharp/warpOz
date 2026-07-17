@@ -15,8 +15,13 @@ description: Use when listing, running, validating, publishing, or troubleshooti
    recursively inside Oz: `--harness` already starts the selected provider.
 5. Inspect the returned run with `oz run get <run-id>` and report its state,
    session link, verifier result, and any blocker.
-6. Use `./scripts/check-warp-api.sh` for a read-only control-plane check. Never
+6. Inspect local evidence with `./scripts/playground runs` and
+   `./scripts/playground show <run-id>`. Raw logs remain gitignored; only commit
+   sanitized records under `artifacts/evidence/`.
+7. Use `./scripts/check-warp-api.sh` for a read-only control-plane check. Never
    print API keys, managed-secret values, provider auth files, or run content.
+8. Refresh `docs/verification.md` after live local or hosted checks. Keep
+   self-hosted work explicitly deferred unless the user brings it into scope.
 
 Environment registration is server-side via `./scripts/playground oz-create`;
 there is no separate publish artifact. If no GitHub remote exists, stop before

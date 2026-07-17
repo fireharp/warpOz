@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-local-python-bugfix-codex",
+  "recorded_at": "2026-07-17T15:06:10Z",
+  "playground": "python-bugfix-codex",
+  "execution": "local",
+  "harness": "codex",
+  "client_version": "codex-cli 0.144.0-alpha.4",
+  "status": "succeeded",
+  "started_at": "2026-07-17T15:01:57Z",
+  "finished_at": "2026-07-17T15:02:31Z",
+  "provider_thread_id": "019f7099-397b-7901-8015-05872f24bdab",
+  "verification": {
+    "command": "./scripts/verify.sh",
+    "status": "passed",
+    "tests": 4
+  },
+  "artifact": {
+    "path": "workspace/src/release_selector.py",
+    "workspace_restored_to_fixture_after_capture": true
+  },
+  "events_sha256": "8ac23d0060dd94cf615b591bfd6340d291a91e93399b9d40d9f3b91615be2c1b"
+}

@@ -28,3 +28,14 @@ rules:
     message: "Oz workflow changed; refresh the operator documentation."
     suggested_commands:
       - git diff README.md docs/
+
+  - id: playground-artifact-contract
+    when:
+      - "playgrounds/*/playground.json"
+    expect_any:
+      - "docs/observability.md"
+      - "artifacts/evidence/*.json"
+    severity: warn
+    message: "Artifact declarations changed; keep observability docs or evidence aligned."
+    suggested_commands:
+      - ./scripts/playground check --manifest-only

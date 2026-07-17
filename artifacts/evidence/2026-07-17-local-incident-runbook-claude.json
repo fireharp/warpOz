@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-local-incident-runbook-claude",
+  "recorded_at": "2026-07-17T15:13:14Z",
+  "run_id": "20260717T151223.014358Z-local-incident-runbook-claude",
+  "playground": "incident-runbook-claude",
+  "execution": "local",
+  "harness": "claude",
+  "client_version": "Claude Code 2.1.209",
+  "status": "succeeded",
+  "duration_seconds": 16.311,
+  "verification": {
+    "status": "passed",
+    "checks": [
+      "source-backed canonical runbook",
+      "source order preserved",
+      "unchanged inputs",
+      "no extra files",
+      "successful Claude result envelope"
+    ]
+  },
+  "artifact": {
+    "path": "run/workspace/runbook.md",
+    "sha256": "be979f0a5eed8365b61cfb2c26a8d671c8c32e73d40374d269f772b97d1c3806"
+  },
+  "prior_failed_run": {
+    "run_id": "20260717T151051.207968Z-local-incident-runbook-claude",
+    "reason": "strict list-marker comparison",
+    "resolution": "prompt now specifies numbered actions; verifier normalizes list markers and trailing whitespace while retaining exact facts and order"
+  }
+}

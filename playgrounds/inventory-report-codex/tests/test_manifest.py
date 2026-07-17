@@ -21,6 +21,7 @@ class ManifestTest(unittest.TestCase):
                 "local_command",
                 "contract_test_command",
                 "cloud_prompt_file",
+                "artifact_paths",
             },
             set(manifest),
         )
@@ -31,6 +32,7 @@ class ManifestTest(unittest.TestCase):
             ["./scripts/contract-test.sh"], manifest["contract_test_command"]
         )
         self.assertTrue((ROOT / manifest["cloud_prompt_file"]).is_file())
+        self.assertIn("workspace/result.json", manifest["artifact_paths"])
 
 
 if __name__ == "__main__":

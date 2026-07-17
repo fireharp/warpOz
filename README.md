@@ -50,6 +50,21 @@ local-versus-cloud parity boundary.
 It uses `WARP_API_KEY` when set, otherwise it sources the OneCLI gateway loader
 and lets OneCLI inject the header. The script reports only HTTP/schema status.
 
+## Run observability
+
+Live local and Oz invocations write a gitignored run ledger with exact duration,
+status, console output, output copies, checksums, and Oz identifiers:
+
+```sh
+./scripts/playground runs
+./scripts/playground show <run-id>
+```
+
+Safe milestone summaries are committed under `artifacts/evidence/`. See
+[docs/observability.md](docs/observability.md) for the record boundary.
+The latest local/hosted outcomes and external blockers are in
+[docs/verification.md](docs/verification.md).
+
 Current interfaces are based on the official [Oz CLI reference](https://docs.warp.dev/reference/cli),
 [harness guide](https://docs.warp.dev/platform/harnesses/), and
 [API reference](https://docs.warp.dev/reference/api-and-sdk/).

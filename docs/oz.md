@@ -48,6 +48,10 @@ oz run list --name python-bugfix-codex
 oz run get <run-id>
 ```
 
+The dispatcher also records the redacted command, duration, result, captured
+outputs, and returned Oz identifiers. Inspect them with
+`./scripts/playground runs` and `./scripts/playground show <local-run-id>`.
+
 Override the default secret names with `OZ_CLAUDE_AUTH_SECRET` or
 `OZ_CODEX_AUTH_SECRET`. `--dry-run` validates command construction without
 dispatching or printing secret values.

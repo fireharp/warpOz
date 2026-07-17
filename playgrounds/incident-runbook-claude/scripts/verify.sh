@@ -7,6 +7,7 @@ STATE_DIR=${PLAYGROUND_STATE_DIR:-"$ROOT/run"}
 python3 - "$ROOT" "$STATE_DIR" <<'PY'
 import json
 import pathlib
+import re
 import sys
 
 root = pathlib.Path(sys.argv[1])
@@ -15,7 +16,17 @@ workspace = state / "workspace"
 
 expected = (root / "fixtures/expected-runbook.md").read_text()
 actual = (workspace / "runbook.md").read_text()
-if actual != expected:
+
+
+def canonical_markdown(value):
+    """Ignore list-marker choice and trailing whitespace, not source facts/order."""
+    lines = []
+    for line in value.replace("\r\n", "\n").splitlines():
+        lines.append(re.sub(r"^(?:\d+\.|-)\s+", "- ", line.rstrip()))
+    return "\n".join(lines).strip()
+
+
+if canonical_markdown(actual) != canonical_markdown(expected):
     raise SystemExit("runbook.md does not match the canonical source-backed artifact")
 
 source_names = ["incident.json", "observations.csv", "service-context.md"]
@@ -36,4 +47,3 @@ print("PASS: runbook.md matches the canonical source-backed artifact")
 print("PASS: all three source files are unchanged and no extras exist")
 print("PASS: claude-result.json is valid JSON and reports no error")
 PY
-

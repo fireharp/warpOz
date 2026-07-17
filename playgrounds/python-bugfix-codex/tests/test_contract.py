@@ -23,6 +23,7 @@ class ScenarioContractTest(unittest.TestCase):
                 "local_command",
                 "contract_test_command",
                 "cloud_prompt_file",
+                "artifact_paths",
             },
             set(manifest),
         )
@@ -33,6 +34,7 @@ class ScenarioContractTest(unittest.TestCase):
             ["./scripts/contract-test.sh"], manifest["contract_test_command"]
         )
         self.assertTrue((ROOT / manifest["cloud_prompt_file"]).is_file())
+        self.assertIn("workspace/src/release_selector.py", manifest["artifact_paths"])
 
     def test_workspace_is_known_baseline_or_fixed(self) -> None:
         environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")

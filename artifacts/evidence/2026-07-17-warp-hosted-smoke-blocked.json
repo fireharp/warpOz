@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-warp-hosted-smoke-blocked",
+  "recorded_at": "2026-07-17T15:06:10Z",
+  "execution": "warp-hosted",
+  "harness": "oz",
+  "environment": null,
+  "name": "warpoz-control-plane-smoke",
+  "status": "blocked_before_run_creation",
+  "blocker": {
+    "code": "insufficient_add_on_credits",
+    "message": "Your team has run out of add-on credits."
+  },
+  "provider_run_id": null,
+  "self_hosted_attempted": false,
+  "note": "Self-hosted verification is intentionally deferred by the task specification."
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-local-inventory-report-codex",
+  "recorded_at": "2026-07-17T15:06:10Z",
+  "playground": "inventory-report-codex",
+  "execution": "local",
+  "harness": "codex",
+  "client_version": "codex-cli 0.144.0-alpha.4",
+  "status": "succeeded",
+  "started_at": "2026-07-17T15:01:07Z",
+  "finished_at": "2026-07-17T15:01:30Z",
+  "provider_thread_id": "019f7098-73c8-7881-9b20-bea31c97d72c",
+  "verification": {
+    "command": "python3 tests/verify.py",
+    "status": "passed"
+  },
+  "artifact": {
+    "path": "workspace/result.json",
+    "sha256": "73d9ff4bb80507a46ddb7e85f56a23ef914e682babdb178fdfda9d6072754b9b"
+  },
+  "events_sha256": "0f502f50ba6cf8b2c8dd1bd00862ef3ad5811617bf4fa46905d64f4fcc749c54"
+}

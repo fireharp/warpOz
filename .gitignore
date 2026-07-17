@@ -3,3 +3,5 @@
 .env
 *.pyc
 __pycache__/
+/artifacts/runs/*
+!/artifacts/runs/README.md
