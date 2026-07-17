@@ -23,10 +23,12 @@ byte-identical runtime.
    ./scripts/playground oz-create --repo owner/repo
    ```
 
-   This uses Warp's public `warpdotdev/dev-base:latest-agents` image. No setup
-   command is used because Oz executes setup in a shell without a stable
+   This uses Warp's public `warpdotdev/dev-base:latest` image. No setup command
+   is used because Oz executes setup in a shell without a stable
    repository-relative working directory; each task prompt verifies its own
-   artifact after the harness starts.
+   artifact after the harness starts. The `latest-agents` tag failed before
+   Codex model execution while Warp installed its required plugin; use the
+   default plain base image for this workflow.
 3. Create provider-specific typed managed secrets. The CLI reads each value
    securely from standard input:
 

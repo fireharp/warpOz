@@ -31,6 +31,7 @@ class PlaygroundCliTest(unittest.TestCase):
         )
         self.assertEqual(0, completed.returncode, completed.stdout)
         self.assertIn("--repo fireharp/warpOz", completed.stdout)
+        self.assertIn("--docker-image warpdotdev/dev-base:latest", completed.stdout)
         self.assertNotIn("--setup-command", completed.stdout)
 
     def test_oz_run_is_observed_and_redacted(self) -> None:

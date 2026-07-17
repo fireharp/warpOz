@@ -30,7 +30,9 @@ description: Use when listing, running, validating, publishing, or troubleshooti
 
 Environment registration is server-side via `./scripts/playground oz-create`;
 there is no separate publish artifact. Oz clones GitHub's default branch, which
-must be `master` for this repository. Do not add repository-relative setup
-commands: task prompts verify their artifacts after the harness starts. If no
-GitHub remote exists, stop before environment creation and report that Oz has
-no repository to clone.
+must be `master` for this repository. Use the default `dev-base:latest` image:
+the `latest-agents` image is retained only as historical evidence after its
+Codex plugin bootstrap failed. Do not add repository-relative setup commands:
+task prompts verify their artifacts after the harness starts. If no GitHub
+remote exists, stop before environment creation and report that Oz has no
+repository to clone.

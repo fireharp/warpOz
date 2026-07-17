@@ -571,7 +571,7 @@ def parser() -> argparse.ArgumentParser:
     create = sub.add_parser("oz-create", help="register the shared Oz environment")
     create.add_argument("--repo")
     create.add_argument("--name", default="warpoz-playgrounds")
-    create.add_argument("--image", default="warpdotdev/dev-base:latest-agents")
+    create.add_argument("--image", default="warpdotdev/dev-base:latest")
     create.add_argument("--dry-run", action="store_true")
     create.set_defaults(func=command_oz_create)
     return result
