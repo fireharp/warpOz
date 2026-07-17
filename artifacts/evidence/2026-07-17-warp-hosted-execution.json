@@ -27,7 +27,6 @@
       "provider_run_id": "019f70e0-a289-733b-af01-a2cd12267b45",
       "state": "SUCCEEDED",
       "requested_model": "gpt-5-2-codex-low",
-      "run_time": "PT4M37S",
       "verification": "Oz status reported that python3 tests/verify.py passed for the generated inventory report."
     },
     {
@@ -36,7 +35,6 @@
       "provider_run_id": "019f70e2-5e9b-7246-be57-1eec3f6046d7",
       "state": "SUCCEEDED",
       "requested_model": "claude-4-5-haiku",
-      "run_time": "PT2M50S",
       "verification": "Oz status reported the expected JSON artifact passed semantic verification and no files outside run/ changed."
     }
   ],
