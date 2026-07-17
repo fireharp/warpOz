@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-warp-hosted-execution",
+  "recorded_at": "2026-07-17T16:10:00Z",
+  "execution": "warp-hosted",
+  "environment": {
+    "id": "JkiAkbyrmUncRAsFpYk9Np",
+    "name": "warpoz-playgrounds",
+    "scope": "personal",
+    "docker_image": "warpdotdev/dev-base:latest-agents",
+    "repository": "fireharp/warpOz",
+    "branch": "master",
+    "setup_commands": []
+  },
+  "authentication": {
+    "warp_control_plane": "authenticated",
+    "managed_harness_credentials": {
+      "claude": "team-scoped Anthropic API credential",
+      "codex": "team-scoped OpenAI API credential"
+    },
+    "secret_values_accessed": false
+  },
+  "results": [
+    {
+      "playground": "deployment-normalizer-claude",
+      "harness": "claude",
+      "provider_run_id": "019f70cc-49aa-7639-a4c2-57c81938f474",
+      "state": "SUCCEEDED",
+      "session_link": "https://app.warp.dev/conversation/019f70cc-8db6-7a15-9fb0-271994650156",
+      "run_time": "PT7M29S",
+      "verification": "Oz status reported the expected JSON artifact passed semantic verification and no files outside run/ changed."
+    },
+    {
+      "playground": "inventory-report-codex",
+      "harness": "codex",
+      "provider_run_id": "019f70cd-2bfa-791e-8287-a84f483a1657",
+      "state": "FAILED",
+      "run_time": "PT25S",
+      "blocker": {
+        "code": "environment_setup_failed",
+        "message": "Codex platform plugin installation for orchestration@codex-warp failed."
+      }
+    },
+    {
+      "playground": "inventory-report-codex",
+      "harness": "codex",
+      "provider_run_id": "019f70ce-58a4-7697-bf01-652df47467ad",
+      "state": "FAILED",
+      "run_time": "PT47S",
+      "retry": true,
+      "blocker": {
+        "code": "environment_setup_failed",
+        "message": "Codex platform plugin installation for orchestration@codex-warp failed."
+      }
+    }
+  ],
+  "self_hosted_attempted": false
+}

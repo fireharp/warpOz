@@ -31,8 +31,8 @@ byte-identical runtime.
    securely from standard input:
 
    ```sh
-   oz secret create claude api-key --personal anthropic-api-test
-   oz secret create codex api-key --personal openai-api-test
+   oz secret create claude api-key --personal claude
+   oz secret create codex api-key --personal codex
    oz secret list
    ```
 
@@ -45,24 +45,24 @@ byte-identical runtime.
 
 ```sh
 export OZ_ENVIRONMENT_ID=<environment-id>
-export OZ_CLAUDE_AUTH_SECRET=anthropic-api-test
-export OZ_CODEX_AUTH_SECRET=openai-api-test
 ./scripts/playground oz deployment-normalizer-claude
 ./scripts/playground oz python-bugfix-codex
 
-oz run list --name python-bugfix-codex
-oz run get <run-id>
+./scripts/playground reconcile <local-run-id-or-prefix>
 ```
 
-The dispatcher also records the redacted command, duration, result, captured
-outputs, and returned Oz identifiers. Inspect them with
-`./scripts/playground runs` and `./scripts/playground show <local-run-id>`.
+The dispatcher records the redacted command, submission duration, captured
+outputs, and returned Oz identifiers. Oz dispatch is asynchronous: use
+`./scripts/playground reconcile <local-run-id>` to update the ledger with the
+remote terminal state, session link, and short result summary. Then inspect it
+with `./scripts/playground runs` and `./scripts/playground show <local-run-id>`.
 
-Override the default secret names with `OZ_CLAUDE_AUTH_SECRET` or
-`OZ_CODEX_AUTH_SECRET`. `--dry-run` validates command construction without
-dispatching or printing secret values. Use `*-test` names for temporary
-personal credentials and separate production names/scope when promoting a
-playground.
+The defaults match the minimal scratch secret names `claude` and `codex`.
+Override them with `OZ_CLAUDE_AUTH_SECRET` or `OZ_CODEX_AUTH_SECRET`; for
+example, use `anthropic-api-test` and `openai-api-test` for explicit test
+credentials, and separate production names/scope when promoting a playground.
+`--dry-run` validates command construction without dispatching or printing
+secret values.
 
 There is no separate environment manifest upload or publish command in the
 current CLI. `oz environment create` registers the server-side environment;

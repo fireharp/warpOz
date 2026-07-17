@@ -61,9 +61,9 @@ class PlaygroundCliTest(unittest.TestCase):
             self.assertEqual(1, len(records))
             record = json.loads(records[0].read_text(encoding="utf-8"))
             self.assertEqual("warp-hosted", record["execution"])
-            self.assertEqual("succeeded", record["status"])
+            self.assertEqual("submitted", record["status"])
             self.assertEqual("run-test-123", record["provider_run_id"])
-            self.assertEqual("QUEUED", record["provider_state"])
+            self.assertEqual("InProgress", record["provider_state"])
             self.assertEqual(
                 "https://oz.warp.dev/runs/run-test-123", record["session_link"]
             )
@@ -71,6 +71,42 @@ class PlaygroundCliTest(unittest.TestCase):
             self.assertIn("<OZ_CODEX_AUTH_SECRET>", command)
             self.assertIn("<oz-prompt.md>", command)
             self.assertNotIn("openai-api", command)
+
+            reconciled = subprocess.run(
+                [str(CLI), "reconcile", record["run_id"]],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(0, reconciled.returncode, reconciled.stdout)
+            record = json.loads(records[0].read_text(encoding="utf-8"))
+            self.assertEqual("succeeded", record["status"])
+            self.assertEqual("SUCCEEDED", record["provider_state"])
+            self.assertEqual("contract passed", record["provider_status_message"])
+            self.assertEqual("2026-07-17T16:30:00Z", record["provider_updated_at"])
+
+            failed = subprocess.run(
+                [
+                    str(CLI),
+                    "reconcile",
+                    record["run_id"],
+                    "--provider-run-id",
+                    "run-test-failed",
+                ],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(1, failed.returncode, failed.stdout)
+            record = json.loads(records[0].read_text(encoding="utf-8"))
+            self.assertEqual("failed", record["status"])
+            self.assertEqual("platform bootstrap failed", record["provider_status_message"])
 
 if __name__ == "__main__":
     unittest.main()

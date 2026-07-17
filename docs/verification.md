@@ -16,25 +16,31 @@
 - Publication: the complete playground catalog and managed-secret dispatcher
   are pushed to `master` on `fireharp/warpOz`, which is GitHub's default branch.
 - Oz personal environment `JkiAkbyrmUncRAsFpYk9Np` was created from that
-  repository using `warpdotdev/dev-base:latest-agents`.
+  repository using `warpdotdev/dev-base:latest-agents`, with no setup commands.
+- Warp-hosted Claude: `deployment-normalizer-claude` completed successfully in
+  provider run `019f70cc-49aa-7639-a4c2-57c81938f474`. Its Oz status confirms
+  the expected JSON artifact passed semantic verification and no files outside
+  the scenario `run/` directory changed.
 
 Safe summaries are under [`artifacts/evidence/`](../artifacts/evidence/).
 
 ## Warp-hosted blockers
 
 - GitHub is connected to the authenticated Oz account and the personal
-  environment exists. There are no managed secrets. Cloud Claude Code and
-  Codex require typed Warp-managed Anthropic/OpenAI credentials; local CLI
-  sessions and subscriptions cannot be reused in Oz.
-- The hosted Claude `deployment-normalizer-claude` and Codex
-  `inventory-report-codex` dispatches initially failed at environment setup: an
-  obsolete `git switch master` command ran outside a Git worktree. The command
-  was removed because GitHub's default branch is already `master`. A second
-  retry showed that Oz setup commands have no stable repository-relative
-  working directory, so the manifest-check setup command is removed too. The
-  runs can be retried after their corresponding auth secrets are added. See
-  [`2026-07-17-warp-environment-hosted-blocked.json`](../artifacts/evidence/2026-07-17-warp-environment-hosted-blocked.json).
+  environment has matching typed managed credentials for the Claude and Codex
+  harnesses. The provider values were never read by this repository or its
+  evidence tools.
+- Warp-hosted Codex is currently blocked in the provider platform bootstrap,
+  not authentication or repository setup. Two independent
+  `inventory-report-codex` attempts, `019f70cd-2bfa-791e-8287-a84f483a1657`
+  and `019f70ce-58a4-7697-bf01-652df47467ad`, failed with
+  `environment_setup_failed` while installing Warp's required
+  `orchestration@codex-warp` plugin. The environment has no setup commands, so
+  this is not caused by a repository-relative setup script.
+
+See [`2026-07-17-warp-hosted-execution.json`](../artifacts/evidence/2026-07-17-warp-hosted-execution.json)
+for the safe, current hosted evidence. Historical credit/setup blockers remain
+in the evidence directory for chronology.
 
 Self-hosted execution was intentionally not attempted; it remains a later task.
-The live retries use the exact commands in [`docs/oz.md`](oz.md); capture their
-returned Oz run/session IDs and verifier results as safe evidence.
+Use [`docs/oz.md`](oz.md) and `scripts/playground reconcile` for future retries.

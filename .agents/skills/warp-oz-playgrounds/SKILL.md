@@ -14,8 +14,10 @@ description: Use when listing, running, validating, publishing, or troubleshooti
    secret name. Local CLI authentication and desktop BYOK do not transfer into
    a cloud third-party harness. Do not invoke `codex` or `claude` recursively
    inside Oz: `--harness` already starts the selected provider.
-5. Inspect the returned run with `oz run get <run-id>` and report its state,
-   session link, verifier result, and any blocker.
+5. Hosted dispatch is asynchronous. Run `./scripts/playground reconcile
+   <local-run-id>` after Oz starts the run; report the remote state, session
+   link, verifier result, and any blocker. Do not treat a clean submission exit
+   as a successful harness run.
 6. Inspect local evidence with `./scripts/playground runs` and
    `./scripts/playground show <run-id>`. Raw logs remain gitignored; only commit
    sanitized records under `artifacts/evidence/`.

@@ -34,8 +34,8 @@ REQUIRED = {
 }
 HARNESSES = {"claude", "codex"}
 AUTH = {
-    "claude": ("OZ_CLAUDE_AUTH_SECRET", "anthropic-api", "--claude-auth-secret"),
-    "codex": ("OZ_CODEX_AUTH_SECRET", "openai-api", "--codex-auth-secret"),
+    "claude": ("OZ_CLAUDE_AUTH_SECRET", "claude", "--claude-auth-secret"),
+    "codex": ("OZ_CODEX_AUTH_SECRET", "codex", "--codex-auth-secret"),
 }
 
 
@@ -147,17 +147,71 @@ def json_field(value: Any, names: tuple[str, ...]) -> Any:
 
 
 def oz_result_fields(console: Path) -> dict[str, Any]:
-    for line in reversed(console.read_text(encoding="utf-8", errors="replace").splitlines()):
+    text = console.read_text(encoding="utf-8", errors="replace")
+    fields: dict[str, Any] = {}
+    for line in reversed(text.splitlines()):
         try:
             value = json.loads(line)
         except json.JSONDecodeError:
             continue
-        return {
+        fields = {
             "provider_run_id": json_field(value, ("run_id", "task_id")),
             "provider_state": json_field(value, ("state", "status")),
             "session_link": json_field(value, ("session_link",)),
         }
-    return {}
+        break
+    patterns = {
+        "provider_run_id": r"Spawned ambient agent with run ID:\s*([^\s]+)",
+        "provider_state": r"Agent state:\s*([^\s]+)",
+        "session_link": r"View agent session:\s*(https?://\S+)",
+    }
+    for key, pattern in patterns.items():
+        if not fields.get(key):
+            match = re.search(pattern, text, flags=re.IGNORECASE)
+            if match:
+                fields[key] = match.group(1)
+    return {key: value for key, value in fields.items() if value is not None}
+
+
+SUCCESS_STATES = {"SUCCEEDED", "SUCCESS", "COMPLETED", "COMPLETE"}
+FAILED_STATES = {"FAILED", "ERROR", "CANCELED", "CANCELLED", "TIMED_OUT"}
+
+
+def hosted_status(exit_code: int, provider_state: Any) -> str:
+    if exit_code != 0:
+        return "failed"
+    state = str(provider_state or "").upper()
+    if state in SUCCESS_STATES:
+        return "succeeded"
+    if state in FAILED_STATES:
+        return "failed"
+    return "submitted"
+
+
+def short_message(value: Any, *, limit: int = 500) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = " ".join(value.split())
+    if not normalized:
+        return None
+    return normalized[:limit]
+
+
+def parse_oz_response(output: str) -> dict[str, Any]:
+    try:
+        value = json.loads(output)
+    except json.JSONDecodeError:
+        for line in reversed(output.splitlines()):
+            try:
+                value = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            break
+        else:
+            raise CatalogError("Oz did not return JSON for the requested run")
+    if not isinstance(value, dict):
+        raise CatalogError("Oz returned an unexpected run response")
+    return value
 
 
 def run_observed(
@@ -201,6 +255,7 @@ def run_observed(
             exit_code = process.wait()
     finished = datetime.now(UTC)
     captured = capture_artifacts(directory, manifest, run_directory)
+    provider_fields = oz_result_fields(console) if execution == "warp-hosted" else {}
     metadata: dict[str, Any] = {
         "schema_version": 1,
         "run_id": run_id,
@@ -208,7 +263,11 @@ def run_observed(
         "task": manifest["task"],
         "harness": manifest["harness"],
         "execution": execution,
-        "status": "succeeded" if exit_code == 0 else "failed",
+        "status": (
+            hosted_status(exit_code, provider_fields.get("provider_state"))
+            if execution == "warp-hosted"
+            else "succeeded" if exit_code == 0 else "failed"
+        ),
         "exit_code": exit_code,
         "started_at": started.isoformat().replace("+00:00", "Z"),
         "finished_at": finished.isoformat().replace("+00:00", "Z"),
@@ -218,7 +277,7 @@ def run_observed(
         "artifacts": captured,
     }
     if execution == "warp-hosted":
-        metadata.update({key: value for key, value in oz_result_fields(console).items() if value is not None})
+        metadata.update(provider_fields)
     (run_directory / "run.json").write_text(
         json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
@@ -357,6 +416,15 @@ def load_runs() -> list[dict[str, Any]]:
     return results
 
 
+def select_run(run_id: str) -> dict[str, Any]:
+    matches = [value for value in load_runs() if value["run_id"].startswith(run_id)]
+    if not matches:
+        raise CatalogError(f"run not found: {run_id}")
+    if len(matches) > 1:
+        raise CatalogError(f"run id prefix is ambiguous: {run_id}")
+    return matches[0]
+
+
 def command_runs(_: argparse.Namespace) -> int:
     rows = []
     for value in load_runs():
@@ -382,15 +450,52 @@ def command_runs(_: argparse.Namespace) -> int:
 
 
 def command_show(args: argparse.Namespace) -> int:
-    matches = [value for value in load_runs() if value["run_id"].startswith(args.run_id)]
-    if not matches:
-        raise CatalogError(f"run not found: {args.run_id}")
-    if len(matches) > 1:
-        raise CatalogError(f"run id prefix is ambiguous: {args.run_id}")
-    value = matches[0].copy()
+    value = select_run(args.run_id).copy()
     value.pop("_path", None)
     print(json.dumps(value, indent=2))
     return 0
+
+
+def command_reconcile(args: argparse.Namespace) -> int:
+    record = select_run(args.run_id)
+    if record.get("execution") != "warp-hosted":
+        raise CatalogError("only warp-hosted runs can be reconciled")
+    provider_run_id = args.provider_run_id or record.get("provider_run_id")
+    if not isinstance(provider_run_id, str) or not provider_run_id:
+        raise CatalogError("pass --provider-run-id because this submission did not capture one")
+    result = subprocess.run(
+        [oz_binary(), "run", "get", provider_run_id, "--output-format", "json"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode:
+        detail = short_message(result.stderr or result.stdout) or "unknown Oz CLI error"
+        raise CatalogError(f"could not reconcile Oz run {provider_run_id}: {detail}")
+    remote = parse_oz_response(result.stdout)
+    provider_state = json_field(remote, ("state", "status"))
+    remote_run_id = json_field(remote, ("run_id", "task_id")) or provider_run_id
+    message = short_message(json_field(remote, ("message",)))
+    path = record.pop("_path")
+    record.update(
+        {
+            "provider_run_id": remote_run_id,
+            "provider_state": provider_state,
+            "session_link": json_field(remote, ("session_link",)),
+            "provider_updated_at": json_field(remote, ("updated_at",)),
+            "provider_status_message": message,
+            "status": hosted_status(0, provider_state),
+            "reconciled_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        }
+    )
+    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    try:
+        shown_path = path.relative_to(ROOT)
+    except ValueError:
+        shown_path = path
+    print(f"reconciled: {shown_path}")
+    return 1 if record["status"] == "failed" else 0
 
 
 def command_oz_create(args: argparse.Namespace) -> int:
@@ -439,6 +544,10 @@ def parser() -> argparse.ArgumentParser:
     show = sub.add_parser("show", help="show one captured run record")
     show.add_argument("run_id")
     show.set_defaults(func=command_show)
+    reconcile = sub.add_parser("reconcile", help="refresh one hosted run from Oz")
+    reconcile.add_argument("run_id")
+    reconcile.add_argument("--provider-run-id")
+    reconcile.set_defaults(func=command_reconcile)
     check = sub.add_parser("check", help="validate manifests and run offline contracts")
     check.add_argument("--manifest-only", action="store_true")
     check.set_defaults(func=command_check)
