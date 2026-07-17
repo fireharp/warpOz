@@ -13,24 +13,26 @@
   returned HTTP 200 with `runs` and `page_info`.
 - Run ledger: captures duration, status, logs, checksums, and output copies;
   `runs`/`show` were exercised against live Claude runs.
-- Publication: the complete playground catalog and environment-auth support are
-  pushed to `master` on `fireharp/warpOz`, which is GitHub's default branch.
+- Publication: the complete playground catalog and managed-secret dispatcher
+  are pushed to `master` on `fireharp/warpOz`, which is GitHub's default branch.
 - Oz personal environment `JkiAkbyrmUncRAsFpYk9Np` was created from that
-  repository using `warpdotdev/dev-base:latest-agents` and validates the four
-  manifests after clone.
+  repository using `warpdotdev/dev-base:latest-agents`.
 
 Safe summaries are under [`artifacts/evidence/`](../artifacts/evidence/).
 
 ## Warp-hosted blockers
 
 - GitHub is connected to the authenticated Oz account and the personal
-  environment exists. There are no managed secrets; both provider dispatches
-  deliberately used environment authentication and did not read key values.
+  environment exists. There are no managed secrets. Cloud Claude Code and
+  Codex require typed Warp-managed Anthropic/OpenAI credentials; local CLI
+  sessions and subscriptions cannot be reused in Oz.
 - The hosted Claude `deployment-normalizer-claude` and Codex
   `inventory-report-codex` dispatches initially failed at environment setup: an
   obsolete `git switch master` command ran outside a Git worktree. The command
-  has been removed because GitHub's default branch is already `master`; the
-  runs will be retried. See
+  was removed because GitHub's default branch is already `master`. A second
+  retry showed that Oz setup commands have no stable repository-relative
+  working directory, so the manifest-check setup command is removed too. The
+  runs can be retried after their corresponding auth secrets are added. See
   [`2026-07-17-warp-environment-hosted-blocked.json`](../artifacts/evidence/2026-07-17-warp-environment-hosted-blocked.json).
 
 Self-hosted execution was intentionally not attempted; it remains a later task.

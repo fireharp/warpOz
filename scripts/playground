@@ -311,11 +311,7 @@ def command_oz(args: argparse.Namespace) -> int:
         raise CatalogError("pass --environment or set OZ_ENVIRONMENT_ID")
     harness = manifest["harness"]
     secret_env, default_secret, secret_flag = AUTH[harness]
-    if args.environment_auth and args.auth_secret:
-        raise CatalogError("--environment-auth cannot be combined with --auth-secret")
-    environment_auth = args.environment_auth or os.environ.get(
-        "OZ_ENVIRONMENT_AUTH", ""
-    ).lower() in {"1", "true", "yes"}
+    secret = args.auth_secret or os.environ.get(secret_env, default_secret)
     prompt = (directory / manifest["cloud_prompt_file"]).read_text(encoding="utf-8")
     command = [
         oz_binary(),
@@ -329,20 +325,16 @@ def command_oz(args: argparse.Namespace) -> int:
         "--harness",
         harness,
     ]
-    if not environment_auth:
-        secret = args.auth_secret or os.environ.get(secret_env, default_secret)
-        command.extend([secret_flag, secret])
+    command.extend([secret_flag, secret])
     command.extend(["--prompt", prompt, "--output-format", "json"])
     if args.dry_run:
         safe = command.copy()
-        if not environment_auth:
-            safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
+        safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
         safe[safe.index("--prompt") + 1] = f"<{manifest['cloud_prompt_file']}>"
         print(shlex.join(safe))
         return 0
     safe = command.copy()
-    if not environment_auth:
-        safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
+    safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
     safe[safe.index("--prompt") + 1] = f"<{manifest['cloud_prompt_file']}>"
     return run_observed(
         command,
@@ -428,8 +420,6 @@ def command_oz_create(args: argparse.Namespace) -> int:
         args.image,
         "--repo",
         repo,
-        "--setup-command",
-        "python3 scripts/playground check --manifest-only",
         "--output-format",
         "json",
     ]
@@ -460,11 +450,6 @@ def parser() -> argparse.ArgumentParser:
     oz.add_argument("name")
     oz.add_argument("--environment")
     oz.add_argument("--auth-secret")
-    oz.add_argument(
-        "--environment-auth",
-        action="store_true",
-        help="use provider authentication already configured in the Oz environment",
-    )
     oz.add_argument("--dry-run", action="store_true")
     oz.set_defaults(func=command_oz)
     create = sub.add_parser("oz-create", help="register the shared Oz environment")

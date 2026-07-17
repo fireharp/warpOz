@@ -10,11 +10,10 @@ description: Use when listing, running, validating, publishing, or troubleshooti
 2. Validate offline with `./scripts/playground verify <name>`.
 3. For a personal local run, use `./scripts/playground local <name>`. Preserve
    the scenario's sandbox, tool, budget, and output restrictions.
-4. For Oz, verify `OZ_ENVIRONMENT_ID` and use authentication already configured
-   in the environment (`--environment-auth` or `OZ_ENVIRONMENT_AUTH=1`); fall
-   back to the matching managed secret name when environment auth is absent.
-   Do not invoke `codex` or `claude` recursively inside Oz: `--harness` already
-   starts the selected provider.
+4. For Oz, verify `OZ_ENVIRONMENT_ID` and the matching typed Warp-managed
+   secret name. Local CLI authentication and desktop BYOK do not transfer into
+   a cloud third-party harness. Do not invoke `codex` or `claude` recursively
+   inside Oz: `--harness` already starts the selected provider.
 5. Inspect the returned run with `oz run get <run-id>` and report its state,
    session link, verifier result, and any blocker.
 6. Inspect local evidence with `./scripts/playground runs` and
@@ -27,5 +26,7 @@ description: Use when listing, running, validating, publishing, or troubleshooti
 
 Environment registration is server-side via `./scripts/playground oz-create`;
 there is no separate publish artifact. Oz clones GitHub's default branch, which
-must be `master` for this repository. If no GitHub remote exists, stop before
-environment creation and report that Oz has no repository to clone.
+must be `master` for this repository. Do not add repository-relative setup
+commands: task prompts verify their artifacts after the harness starts. If no
+GitHub remote exists, stop before environment creation and report that Oz has
+no repository to clone.

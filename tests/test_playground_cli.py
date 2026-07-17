@@ -14,7 +14,7 @@ FAKE_OZ = ROOT / "tests" / "fake-oz.sh"
 
 
 class PlaygroundCliTest(unittest.TestCase):
-    def test_oz_create_runs_manifest_check(self) -> None:
+    def test_oz_create_uses_only_server_side_environment_options(self) -> None:
         completed = subprocess.run(
             [
                 str(CLI),
@@ -30,8 +30,8 @@ class PlaygroundCliTest(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, completed.returncode, completed.stdout)
-        self.assertIn("python3 scripts/playground check --manifest-only", completed.stdout)
-        self.assertNotIn("git switch", completed.stdout)
+        self.assertIn("--repo fireharp/warpOz", completed.stdout)
+        self.assertNotIn("--setup-command", completed.stdout)
 
     def test_oz_run_is_observed_and_redacted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -71,37 +71,6 @@ class PlaygroundCliTest(unittest.TestCase):
             self.assertIn("<OZ_CODEX_AUTH_SECRET>", command)
             self.assertIn("<oz-prompt.md>", command)
             self.assertNotIn("openai-api", command)
-
-    def test_oz_run_can_use_environment_auth(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            environment = dict(
-                os.environ,
-                OZ_BIN=str(FAKE_OZ),
-                PLAYGROUND_RUNS_DIR=temporary,
-            )
-            completed = subprocess.run(
-                [
-                    str(CLI),
-                    "oz",
-                    "deployment-normalizer-claude",
-                    "--environment",
-                    "env-test",
-                    "--environment-auth",
-                ],
-                cwd=ROOT,
-                env=environment,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                check=False,
-            )
-            self.assertEqual(0, completed.returncode, completed.stdout)
-
-            record = json.loads(next(Path(temporary).glob("*/run.json")).read_text())
-            command = " ".join(record["command"])
-            self.assertNotIn("--claude-auth-secret", command)
-            self.assertNotIn("anthropic-api", command)
-
 
 if __name__ == "__main__":
     unittest.main()
