@@ -5,6 +5,9 @@ Codex or Claude setup into an Oz-managed herd. Playgrounds are named for the
 job first and the harness second, so the catalog describes work rather than a
 vendor directory.
 
+New here? Read the [developer guide](docs/developer-guide.md) for the executive
+summary, exact deploy/update loop, and where to inspect live runs.
+
 ## Playground catalog
 
 | Playground | Harness | Runtime class | Goal |
