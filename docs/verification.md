@@ -31,12 +31,15 @@ Safe summaries are under [`artifacts/evidence/`](../artifacts/evidence/).
   harnesses. The provider values were never read by this repository or its
   evidence tools.
 - Warp-hosted Codex is currently blocked in the provider platform bootstrap,
-  not authentication or repository setup. Two independent
+  not authentication, repository setup, or model tier. Three independent
   `inventory-report-codex` attempts, `019f70cd-2bfa-791e-8287-a84f483a1657`
-  and `019f70ce-58a4-7697-bf01-652df47467ad`, failed with
+  `019f70ce-58a4-7697-bf01-652df47467ad`, and
+  `019f70dc-27e2-77a8-a45e-4a4423c6de61`, failed with
   `environment_setup_failed` while installing Warp's required
-  `orchestration@codex-warp` plugin. The environment has no setup commands, so
-  this is not caused by a repository-relative setup script.
+  `orchestration@codex-warp` plugin. The final attempt explicitly requested
+  `gpt-5-2-codex-low`; the identical failure occurs before the model runs. The
+  environment has no setup commands, so this is not caused by a
+  repository-relative setup script.
 
 See [`2026-07-17-warp-hosted-execution.json`](../artifacts/evidence/2026-07-17-warp-hosted-execution.json)
 for the safe, current hosted evidence. Historical credit/setup blockers remain

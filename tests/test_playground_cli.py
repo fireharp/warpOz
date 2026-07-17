@@ -69,6 +69,7 @@ class PlaygroundCliTest(unittest.TestCase):
             )
             command = " ".join(record["command"])
             self.assertIn("<OZ_CODEX_AUTH_SECRET>", command)
+            self.assertIn("--model gpt-5-2-codex-low", command)
             self.assertIn("<oz-prompt.md>", command)
             self.assertNotIn("openai-api", command)
 
@@ -107,6 +108,27 @@ class PlaygroundCliTest(unittest.TestCase):
             record = json.loads(records[0].read_text(encoding="utf-8"))
             self.assertEqual("failed", record["status"])
             self.assertEqual("platform bootstrap failed", record["provider_status_message"])
+
+    def test_oz_model_can_be_overridden(self) -> None:
+        completed = subprocess.run(
+            [
+                str(CLI),
+                "oz",
+                "inventory-report-codex",
+                "--environment",
+                "env-test",
+                "--model",
+                "gpt-5-3-codex-low",
+                "--dry-run",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stdout)
+        self.assertIn("--model gpt-5-3-codex-low", completed.stdout)
 
 if __name__ == "__main__":
     unittest.main()

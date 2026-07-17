@@ -37,6 +37,10 @@ AUTH = {
     "claude": ("OZ_CLAUDE_AUTH_SECRET", "claude", "--claude-auth-secret"),
     "codex": ("OZ_CODEX_AUTH_SECRET", "codex", "--codex-auth-secret"),
 }
+MODELS = {
+    "claude": "claude-4-5-haiku",
+    "codex": "gpt-5-2-codex-low",
+}
 
 
 class CatalogError(RuntimeError):
@@ -371,6 +375,7 @@ def command_oz(args: argparse.Namespace) -> int:
     harness = manifest["harness"]
     secret_env, default_secret, secret_flag = AUTH[harness]
     secret = args.auth_secret or os.environ.get(secret_env, default_secret)
+    model = args.model or os.environ.get("OZ_MODEL") or MODELS[harness]
     prompt = (directory / manifest["cloud_prompt_file"]).read_text(encoding="utf-8")
     command = [
         oz_binary(),
@@ -385,6 +390,7 @@ def command_oz(args: argparse.Namespace) -> int:
         harness,
     ]
     command.extend([secret_flag, secret])
+    command.extend(["--model", model])
     command.extend(["--prompt", prompt, "--output-format", "json"])
     if args.dry_run:
         safe = command.copy()
@@ -559,6 +565,7 @@ def parser() -> argparse.ArgumentParser:
     oz.add_argument("name")
     oz.add_argument("--environment")
     oz.add_argument("--auth-secret")
+    oz.add_argument("--model", help="override the low-cost harness model")
     oz.add_argument("--dry-run", action="store_true")
     oz.set_defaults(func=command_oz)
     create = sub.add_parser("oz-create", help="register the shared Oz environment")

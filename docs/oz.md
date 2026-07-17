@@ -61,7 +61,10 @@ The defaults match the minimal scratch secret names `claude` and `codex`.
 Override them with `OZ_CLAUDE_AUTH_SECRET` or `OZ_CODEX_AUTH_SECRET`; for
 example, use `anthropic-api-test` and `openai-api-test` for explicit test
 credentials, and separate production names/scope when promoting a playground.
-`--dry-run` validates command construction without dispatching or printing
+The dispatcher also requests its low-cost default model: Claude Haiku for
+Claude tasks and the `low` Codex tier for Codex tasks. Set `OZ_MODEL` or pass
+`--model <id>` to override a run; `oz model list` shows the currently supported
+IDs. `--dry-run` validates command construction without dispatching or printing
 secret values.
 
 There is no separate environment manifest upload or publish command in the

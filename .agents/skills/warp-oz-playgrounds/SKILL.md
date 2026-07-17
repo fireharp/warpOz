@@ -13,7 +13,9 @@ description: Use when listing, running, validating, publishing, or troubleshooti
 4. For Oz, verify `OZ_ENVIRONMENT_ID` and the matching typed Warp-managed
    secret name. Local CLI authentication and desktop BYOK do not transfer into
    a cloud third-party harness. Do not invoke `codex` or `claude` recursively
-   inside Oz: `--harness` already starts the selected provider.
+   inside Oz: `--harness` already starts the selected provider. Keep cloud
+   tests economical: use the dispatcher default low-cost model or pass an
+   explicit `--model` from `oz model list`.
 5. Hosted dispatch is asynchronous. Run `./scripts/playground reconcile
    <local-run-id>` after Oz starts the run; report the remote state, session
    link, verifier result, and any blocker. Do not treat a clean submission exit

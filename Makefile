@@ -1,4 +1,4 @@
-.PHONY: list runs show setup test api-check local oz-create oz-run
+.PHONY: list runs show reconcile setup test api-check local oz-create oz-run
 
 list:
 	./scripts/playground list
@@ -9,6 +9,10 @@ runs:
 show:
 	@test -n "$(RUN_ID)" || (echo "usage: make show RUN_ID=<id-or-prefix>" >&2; exit 2)
 	./scripts/playground show "$(RUN_ID)"
+
+reconcile:
+	@test -n "$(RUN_ID)" || (echo "usage: make reconcile RUN_ID=<local-run-id-or-prefix>" >&2; exit 2)
+	./scripts/playground reconcile "$(RUN_ID)"
 
 setup:
 	./scripts/setup.sh

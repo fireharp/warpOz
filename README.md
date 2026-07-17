@@ -38,6 +38,7 @@ has a GitHub remote with `master` as its default branch:
 make oz-create OZ_REPO=owner/repo
 export OZ_ENVIRONMENT_ID=<environment-id>
 make oz-run PLAYGROUND=inventory-report-codex
+make reconcile RUN_ID=<local-run-id>
 ```
 
 Provider credentials stay in Oz, never in this repository. Cloud Claude Code
@@ -45,6 +46,10 @@ and Codex require typed Warp-managed Anthropic and OpenAI secrets; local CLI
 logins and subscriptions do not transfer. Use separate test and production
 secret names; see [docs/oz.md](docs/oz.md) for the one-time setup and the
 local-versus-cloud parity boundary.
+
+Hosted dispatch defaults to a low-cost model for each harness. Supply
+`OZ_MODEL=<id>` or `./scripts/playground oz ... --model <id>` only when a task
+needs a different supported model; see `oz model list` for current choices.
 
 ## Control-plane check
 
@@ -59,6 +64,7 @@ status, console output, output copies, checksums, and Oz identifiers:
 
 ```sh
 ./scripts/playground runs
+make reconcile RUN_ID=<local-run-id>
 ./scripts/playground show <run-id>
 ```
 

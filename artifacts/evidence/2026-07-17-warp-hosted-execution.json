@@ -52,6 +52,19 @@
         "code": "environment_setup_failed",
         "message": "Codex platform plugin installation for orchestration@codex-warp failed."
       }
+    },
+    {
+      "playground": "inventory-report-codex",
+      "harness": "codex",
+      "provider_run_id": "019f70dc-27e2-77a8-a45e-4a4423c6de61",
+      "state": "FAILED",
+      "run_time": "PT25S",
+      "retry": true,
+      "requested_model": "gpt-5-2-codex-low",
+      "blocker": {
+        "code": "environment_setup_failed",
+        "message": "Codex platform plugin installation for orchestration@codex-warp failed before model execution."
+      }
     }
   ],
   "self_hosted_attempted": false
