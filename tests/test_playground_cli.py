@@ -53,6 +53,36 @@ class PlaygroundCliTest(unittest.TestCase):
             self.assertIn("<oz-prompt.md>", command)
             self.assertNotIn("openai-api", command)
 
+    def test_oz_run_can_use_environment_auth(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            environment = dict(
+                os.environ,
+                OZ_BIN=str(FAKE_OZ),
+                PLAYGROUND_RUNS_DIR=temporary,
+            )
+            completed = subprocess.run(
+                [
+                    str(CLI),
+                    "oz",
+                    "deployment-normalizer-claude",
+                    "--environment",
+                    "env-test",
+                    "--environment-auth",
+                ],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            self.assertEqual(0, completed.returncode, completed.stdout)
+
+            record = json.loads(next(Path(temporary).glob("*/run.json")).read_text())
+            command = " ".join(record["command"])
+            self.assertNotIn("--claude-auth-secret", command)
+            self.assertNotIn("anthropic-api", command)
+
 
 if __name__ == "__main__":
     unittest.main()

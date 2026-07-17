@@ -24,7 +24,21 @@ byte-identical runtime.
 
    This uses Warp's public `warpdotdev/dev-base:latest-agents` image, which
    contains Claude Code and Codex, then validates all playground manifests.
-3. Create provider-specific managed secrets. The CLI reads each value securely
+3. Prefer authentication configured in the Oz environment. In the Oz UI this
+   appears as **Skipped — using environment auth**; dispatch with:
+
+   ```sh
+   export OZ_ENVIRONMENT_AUTH=1
+   ./scripts/playground oz deployment-normalizer-claude
+   ./scripts/playground oz python-bugfix-codex
+   ```
+
+   The dispatcher then omits the provider-secret flag and lets the selected
+   environment authenticate the Claude/Codex harness. It neither reads nor
+   writes key values.
+
+   If that environment authentication is not configured, create
+   provider-specific managed secrets instead. The CLI reads each value securely
    from standard input:
 
    ```sh
@@ -52,9 +66,11 @@ The dispatcher also records the redacted command, duration, result, captured
 outputs, and returned Oz identifiers. Inspect them with
 `./scripts/playground runs` and `./scripts/playground show <local-run-id>`.
 
-Override the default secret names with `OZ_CLAUDE_AUTH_SECRET` or
-`OZ_CODEX_AUTH_SECRET`. `--dry-run` validates command construction without
-dispatching or printing secret values.
+Use `--environment-auth` for a single environment-authenticated dispatch, or
+set `OZ_ENVIRONMENT_AUTH=1` for a shell. For the managed-secret path, override
+the default names with `OZ_CLAUDE_AUTH_SECRET` or `OZ_CODEX_AUTH_SECRET`.
+`--dry-run` validates command construction without dispatching or printing
+secret values.
 
 There is no separate environment manifest upload or publish command in the
 current CLI. `oz environment create` registers the server-side environment;

@@ -40,8 +40,9 @@ export OZ_ENVIRONMENT_ID=<environment-id>
 make oz-run PLAYGROUND=inventory-report-codex
 ```
 
-Provider credentials belong in Oz managed secrets, never in this repository.
-See [docs/oz.md](docs/oz.md) for the one-time environment/secret setup and the
+Provider credentials stay in Oz, never in this repository: use authentication
+already configured for the environment (`OZ_ENVIRONMENT_AUTH=1`) or a managed
+secret. See [docs/oz.md](docs/oz.md) for the one-time setup and the
 local-versus-cloud parity boundary.
 
 ## Control-plane check
