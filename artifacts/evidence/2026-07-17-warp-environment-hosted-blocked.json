@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "evidence_id": "2026-07-17-warp-environment-hosted-blocked",
+  "recorded_at": "2026-07-17T15:36:58Z",
+  "execution": "warp-hosted",
+  "environment": {
+    "id": "JkiAkbyrmUncRAsFpYk9Np",
+    "name": "warpoz-playgrounds",
+    "scope": "personal",
+    "docker_image": "warpdotdev/dev-base:latest-agents",
+    "repository": "fireharp/warpOz",
+    "branch": "master",
+    "setup_commands": [
+      "git switch master",
+      "python3 scripts/playground check --manifest-only"
+    ]
+  },
+  "authentication": {
+    "warp_control_plane": "authenticated",
+    "provider_harness": "environment-auth requested",
+    "secret_values_accessed": false
+  },
+  "attempts": [
+    {
+      "playground": "deployment-normalizer-claude",
+      "harness": "claude",
+      "local_run_id": "20260717T153632.905530Z-warp-hosted-deployment-normalizer-claude",
+      "duration_seconds": 1.721,
+      "provider_run_id": null,
+      "status": "blocked_before_run_creation"
+    },
+    {
+      "playground": "inventory-report-codex",
+      "harness": "codex",
+      "local_run_id": "20260717T153657.190655Z-warp-hosted-inventory-report-codex",
+      "duration_seconds": 1.267,
+      "provider_run_id": null,
+      "status": "blocked_before_run_creation"
+    }
+  ],
+  "blocker": {
+    "code": "insufficient_add_on_credits",
+    "message": "Your team has run out of add-on credits."
+  },
+  "run_list_count_after_attempts": 0,
+  "self_hosted_attempted": false
+}
