@@ -14,7 +14,7 @@ FAKE_OZ = ROOT / "tests" / "fake-oz.sh"
 
 
 class PlaygroundCliTest(unittest.TestCase):
-    def test_oz_create_checks_out_master(self) -> None:
+    def test_oz_create_runs_manifest_check(self) -> None:
         completed = subprocess.run(
             [
                 str(CLI),
@@ -30,7 +30,8 @@ class PlaygroundCliTest(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, completed.returncode, completed.stdout)
-        self.assertIn("git switch master", completed.stdout)
+        self.assertIn("python3 scripts/playground check --manifest-only", completed.stdout)
+        self.assertNotIn("git switch", completed.stdout)
 
     def test_oz_run_is_observed_and_redacted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

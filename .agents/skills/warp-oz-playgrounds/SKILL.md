@@ -26,7 +26,6 @@ description: Use when listing, running, validating, publishing, or troubleshooti
    self-hosted work explicitly deferred unless the user brings it into scope.
 
 Environment registration is server-side via `./scripts/playground oz-create`;
-there is no separate publish artifact. It checks out `master` after cloning by
-default, independent of the GitHub default-branch setting. If no GitHub remote
-exists, stop before environment creation and report that Oz has no repository
-to clone.
+there is no separate publish artifact. Oz clones GitHub's default branch, which
+must be `master` for this repository. If no GitHub remote exists, stop before
+environment creation and report that Oz has no repository to clone.
