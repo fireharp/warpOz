@@ -31,8 +31,8 @@ byte-identical runtime.
    securely from standard input:
 
    ```sh
-   oz secret create claude api-key --personal anthropic-api
-   oz secret create codex api-key --personal openai-api
+   oz secret create claude api-key --personal anthropic-api-test
+   oz secret create codex api-key --personal openai-api-test
    oz secret list
    ```
 
@@ -45,6 +45,8 @@ byte-identical runtime.
 
 ```sh
 export OZ_ENVIRONMENT_ID=<environment-id>
+export OZ_CLAUDE_AUTH_SECRET=anthropic-api-test
+export OZ_CODEX_AUTH_SECRET=openai-api-test
 ./scripts/playground oz deployment-normalizer-claude
 ./scripts/playground oz python-bugfix-codex
 
@@ -58,7 +60,9 @@ outputs, and returned Oz identifiers. Inspect them with
 
 Override the default secret names with `OZ_CLAUDE_AUTH_SECRET` or
 `OZ_CODEX_AUTH_SECRET`. `--dry-run` validates command construction without
-dispatching or printing secret values.
+dispatching or printing secret values. Use `*-test` names for temporary
+personal credentials and separate production names/scope when promoting a
+playground.
 
 There is no separate environment manifest upload or publish command in the
 current CLI. `oz environment create` registers the server-side environment;

@@ -42,8 +42,9 @@ make oz-run PLAYGROUND=inventory-report-codex
 
 Provider credentials stay in Oz, never in this repository. Cloud Claude Code
 and Codex require typed Warp-managed Anthropic and OpenAI secrets; local CLI
-logins and subscriptions do not transfer. See [docs/oz.md](docs/oz.md) for
-the one-time setup and the local-versus-cloud parity boundary.
+logins and subscriptions do not transfer. Use separate test and production
+secret names; see [docs/oz.md](docs/oz.md) for the one-time setup and the
+local-versus-cloud parity boundary.
 
 ## Control-plane check
 
