@@ -1,0 +1,10 @@
+{
+  "name": "deployment-normalizer-claude",
+  "task": "Normalize deployment metadata into a validated JSON artifact",
+  "harness": "claude",
+  "runtime_class": "small",
+  "estimated_minutes": 2,
+  "local_command": ["./scripts/run.sh"],
+  "contract_test_command": ["./tests/test.sh"],
+  "cloud_prompt_file": "oz-prompt.md"
+}

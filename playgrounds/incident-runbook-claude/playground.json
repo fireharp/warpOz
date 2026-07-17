@@ -1,0 +1,10 @@
+{
+  "name": "incident-runbook-claude",
+  "task": "Synthesize a deterministic incident response runbook from service facts and telemetry",
+  "harness": "claude",
+  "runtime_class": "medium",
+  "estimated_minutes": 5,
+  "local_command": ["./scripts/run.sh"],
+  "contract_test_command": ["./tests/test.sh"],
+  "cloud_prompt_file": "oz-prompt.md"
+}

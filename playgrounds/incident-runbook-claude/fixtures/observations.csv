@@ -1,0 +1,5 @@
+observed_at,signal,value,threshold
+2026-07-17T09:12:00Z,checkout_5xx_rate,18.4%,5%
+2026-07-17T09:14:00Z,p95_latency,2.8s,900ms
+2026-07-17T09:16:00Z,payments_gateway_timeout_rate,14.1%,2%
+

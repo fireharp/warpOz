@@ -1,0 +1,9 @@
+# Safe project defaults for interactive inspection. The runner repeats these
+# values on the command line so automation does not depend on project trust.
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+web_search = "disabled"
+allow_login_shell = false
+
+[features]
+multi_agent = false

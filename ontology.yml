@@ -1,0 +1,30 @@
+version: 1
+
+commands:
+  test:
+    - make test
+  build:
+    - python3 scripts/playground check --manifest-only
+
+rules:
+  - id: playground-needs-manifest
+    when:
+      - "playgrounds/*/**"
+    expect_any:
+      - "playgrounds/*/playground.json"
+    severity: error
+    message: "Every playground must keep its task, harness, runtime, and entrypoints in playground.json."
+    suggested_commands:
+      - ./scripts/playground check --manifest-only
+
+  - id: oz-runner-change-needs-doc
+    when:
+      - "scripts/playground"
+      - "scripts/check-warp-api.sh"
+    expect_any:
+      - "README.md"
+      - "docs/**/*.md"
+    severity: warn
+    message: "Oz workflow changed; refresh the operator documentation."
+    suggested_commands:
+      - git diff README.md docs/

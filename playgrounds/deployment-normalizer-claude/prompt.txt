@@ -1,0 +1,13 @@
+Complete one deterministic file task in the current directory.
+
+1. Use Read to inspect input.txt. It contains key=value lines.
+2. Use Write to create output.json with this JSON object:
+   - deployment: the deployment value
+   - owner: the owner value
+   - target_count: the number of comma-separated targets
+   - targets: the targets as an array in their original order
+3. Do not create, edit, or delete any other file.
+4. Read output.json and confirm it is valid JSON with exactly those four fields.
+
+Finish with a short statement that output.json is complete.
+

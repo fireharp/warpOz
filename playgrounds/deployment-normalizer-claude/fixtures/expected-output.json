@@ -1,0 +1,10 @@
+{
+  "deployment": "oz-demo",
+  "owner": "developer-experience",
+  "target_count": 2,
+  "targets": [
+    "claude",
+    "codex"
+  ]
+}
+

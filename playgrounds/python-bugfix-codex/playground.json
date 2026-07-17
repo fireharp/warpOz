@@ -1,0 +1,10 @@
+{
+  "name": "python-bugfix-codex",
+  "task": "Diagnose a failing Python release-artifact selector test and implement the minimal semantic-version ordering fix.",
+  "harness": "codex",
+  "runtime_class": "medium",
+  "estimated_minutes": 8,
+  "local_command": ["./scripts/run.sh"],
+  "contract_test_command": ["./scripts/contract-test.sh"],
+  "cloud_prompt_file": "oz-prompt.md"
+}

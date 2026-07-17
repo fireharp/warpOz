@@ -1,0 +1,5 @@
+.coherence/
+.DS_Store
+.env
+*.pyc
+__pycache__/

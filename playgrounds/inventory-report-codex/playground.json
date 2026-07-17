@@ -1,0 +1,10 @@
+{
+  "name": "inventory-report-codex",
+  "task": "Generate and independently verify a deterministic JSON inventory report from CSV input.",
+  "harness": "codex",
+  "runtime_class": "small",
+  "estimated_minutes": 4,
+  "local_command": ["./scripts/run.sh"],
+  "contract_test_command": ["./scripts/contract-test.sh"],
+  "cloud_prompt_file": "oz-prompt.md"
+}

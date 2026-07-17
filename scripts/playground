@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""Run task-named playgrounds locally or dispatch them to Oz."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+PLAYGROUNDS = ROOT / "playgrounds"
+REQUIRED = {
+    "name",
+    "task",
+    "harness",
+    "runtime_class",
+    "estimated_minutes",
+    "local_command",
+    "contract_test_command",
+    "cloud_prompt_file",
+}
+HARNESSES = {"claude", "codex"}
+AUTH = {
+    "claude": ("OZ_CLAUDE_AUTH_SECRET", "anthropic-api", "--claude-auth-secret"),
+    "codex": ("OZ_CODEX_AUTH_SECRET", "openai-api", "--codex-auth-secret"),
+}
+
+
+class CatalogError(RuntimeError):
+    pass
+
+
+def load_catalog() -> dict[str, tuple[Path, dict[str, Any]]]:
+    catalog: dict[str, tuple[Path, dict[str, Any]]] = {}
+    errors: list[str] = []
+    for manifest_path in sorted(PLAYGROUNDS.glob("*/playground.json")):
+        directory = manifest_path.parent
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            errors.append(f"{manifest_path.relative_to(ROOT)}: {error}")
+            continue
+        missing = sorted(REQUIRED - manifest.keys())
+        if missing:
+            errors.append(f"{manifest_path.relative_to(ROOT)}: missing {', '.join(missing)}")
+            continue
+        name = manifest["name"]
+        if not isinstance(name, str) or name != directory.name:
+            errors.append(f"{manifest_path.relative_to(ROOT)}: name must equal directory name")
+            continue
+        if manifest["harness"] not in HARNESSES:
+            errors.append(f"{manifest_path.relative_to(ROOT)}: unsupported harness")
+        if name in catalog:
+            errors.append(f"duplicate playground name: {name}")
+        for field in ("local_command", "contract_test_command"):
+            value = manifest[field]
+            if not isinstance(value, list) or not value or not all(isinstance(item, str) for item in value):
+                errors.append(f"{manifest_path.relative_to(ROOT)}: {field} must be a string array")
+        prompt = directory / manifest["cloud_prompt_file"]
+        if not prompt.is_file():
+            errors.append(f"{manifest_path.relative_to(ROOT)}: missing {manifest['cloud_prompt_file']}")
+        catalog[name] = (directory, manifest)
+    if not catalog:
+        errors.append("no playground manifests found")
+    if errors:
+        raise CatalogError("\n".join(errors))
+    return catalog
+
+
+def select(name: str) -> tuple[Path, dict[str, Any]]:
+    catalog = load_catalog()
+    try:
+        return catalog[name]
+    except KeyError as error:
+        choices = ", ".join(catalog)
+        raise CatalogError(f"unknown playground {name!r}; choose: {choices}") from error
+
+
+def run(command: list[str], *, cwd: Path = ROOT) -> int:
+    print(f"+ {shlex.join(command)}", flush=True)
+    return subprocess.run(command, cwd=cwd, check=False).returncode
+
+
+def oz_binary() -> str:
+    override = os.environ.get("OZ_BIN")
+    if override:
+        return override
+    on_path = shutil.which("oz")
+    if on_path:
+        return on_path
+    bundled = Path("/Applications/Warp.app/Contents/Resources/bin/oz")
+    if bundled.is_file():
+        return str(bundled)
+    raise CatalogError("Oz CLI not found; install it or set OZ_BIN")
+
+
+def github_repo(value: str) -> str:
+    value = value.strip().removesuffix(".git")
+    patterns = (
+        r"^git@github\.com:([^/]+/[^/]+)$",
+        r"^https?://github\.com/([^/]+/[^/]+)$",
+        r"^([^/]+/[^/]+)$",
+    )
+    for pattern in patterns:
+        match = re.match(pattern, value)
+        if match:
+            return match.group(1)
+    raise CatalogError(f"cannot derive GitHub owner/repo from {value!r}")
+
+
+def command_list(_: argparse.Namespace) -> int:
+    rows = []
+    for name, (_, manifest) in load_catalog().items():
+        rows.append(
+            (
+                name,
+                manifest["harness"],
+                manifest["runtime_class"],
+                str(manifest["estimated_minutes"]),
+                manifest["task"],
+            )
+        )
+    headers = ("NAME", "HARNESS", "CLASS", "MINUTES", "TASK")
+    widths = [max(len(headers[i]), *(len(row[i]) for row in rows)) for i in range(len(headers))]
+    print("  ".join(headers[i].ljust(widths[i]) for i in range(len(headers))))
+    for row in rows:
+        print("  ".join(row[i].ljust(widths[i]) for i in range(len(row))))
+    return 0
+
+
+def command_check(args: argparse.Namespace) -> int:
+    catalog = load_catalog()
+    print(f"catalog: {len(catalog)} playgrounds valid")
+    if args.manifest_only:
+        return 0
+    failures = 0
+    for name, (directory, manifest) in catalog.items():
+        print(f"\n[{name}] contract test")
+        failures += run(manifest["contract_test_command"], cwd=directory) != 0
+    return 1 if failures else 0
+
+
+def command_local(args: argparse.Namespace) -> int:
+    directory, manifest = select(args.name)
+    return run(manifest["local_command"], cwd=directory)
+
+
+def command_verify(args: argparse.Namespace) -> int:
+    directory, manifest = select(args.name)
+    return run(manifest["contract_test_command"], cwd=directory)
+
+
+def command_oz(args: argparse.Namespace) -> int:
+    directory, manifest = select(args.name)
+    environment = args.environment or os.environ.get("OZ_ENVIRONMENT_ID")
+    if not environment:
+        raise CatalogError("pass --environment or set OZ_ENVIRONMENT_ID")
+    harness = manifest["harness"]
+    secret_env, default_secret, secret_flag = AUTH[harness]
+    secret = args.auth_secret or os.environ.get(secret_env, default_secret)
+    prompt = (directory / manifest["cloud_prompt_file"]).read_text(encoding="utf-8")
+    command = [
+        oz_binary(),
+        "agent",
+        "run-cloud",
+        "--personal",
+        "--environment",
+        environment,
+        "--name",
+        manifest["name"],
+        "--harness",
+        harness,
+        secret_flag,
+        secret,
+        "--prompt",
+        prompt,
+        "--output-format",
+        "json",
+    ]
+    if args.dry_run:
+        safe = command.copy()
+        safe[safe.index(secret_flag) + 1] = f"<{secret_env}>"
+        safe[safe.index("--prompt") + 1] = f"<{manifest['cloud_prompt_file']}>"
+        print(shlex.join(safe))
+        return 0
+    return run(command)
+
+
+def command_oz_create(args: argparse.Namespace) -> int:
+    repo_value = args.repo or os.environ.get("OZ_REPO")
+    if not repo_value:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode:
+            raise CatalogError("pass --repo owner/repo, set OZ_REPO, or configure origin")
+        repo_value = result.stdout
+    repo = github_repo(repo_value)
+    command = [
+        oz_binary(),
+        "environment",
+        "create",
+        "--personal",
+        "--name",
+        args.name,
+        "--description",
+        "Task-named Codex and Claude developer playgrounds",
+        "--docker-image",
+        args.image,
+        "--repo",
+        repo,
+        "--setup-command",
+        "python3 scripts/playground check --manifest-only",
+        "--output-format",
+        "json",
+    ]
+    if args.dry_run:
+        print(shlex.join(command))
+        return 0
+    return run(command)
+
+
+def parser() -> argparse.ArgumentParser:
+    result = argparse.ArgumentParser(description=__doc__)
+    sub = result.add_subparsers(dest="command", required=True)
+    list_parser = sub.add_parser("list", help="list task-named playgrounds")
+    list_parser.set_defaults(func=command_list)
+    check = sub.add_parser("check", help="validate manifests and run offline contracts")
+    check.add_argument("--manifest-only", action="store_true")
+    check.set_defaults(func=command_check)
+    for name, func in (("local", command_local), ("verify", command_verify)):
+        item = sub.add_parser(name)
+        item.add_argument("name")
+        item.set_defaults(func=func)
+    oz = sub.add_parser("oz", help="dispatch one named playground to Oz")
+    oz.add_argument("name")
+    oz.add_argument("--environment")
+    oz.add_argument("--auth-secret")
+    oz.add_argument("--dry-run", action="store_true")
+    oz.set_defaults(func=command_oz)
+    create = sub.add_parser("oz-create", help="register the shared Oz environment")
+    create.add_argument("--repo")
+    create.add_argument("--name", default="warpoz-playgrounds")
+    create.add_argument("--image", default="warpdotdev/dev-base:latest-agents")
+    create.add_argument("--dry-run", action="store_true")
+    create.set_defaults(func=command_oz_create)
+    return result
+
+
+def main() -> int:
+    try:
+        args = parser().parse_args()
+        return args.func(args)
+    except CatalogError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

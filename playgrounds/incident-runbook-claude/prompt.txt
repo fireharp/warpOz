@@ -1,0 +1,30 @@
+Create a deterministic incident runbook from the three source files in the
+current directory: incident.json, observations.csv, and service-context.md.
+
+Use Read to inspect every source. Use Write to create runbook.md. Do not create,
+edit, or delete any other file.
+
+The runbook must contain these headings in order:
+
+1. `# Incident runbook: <incident id>`
+2. `## Situation`
+3. `## Evidence`
+4. `## Immediate response`
+5. `## Recovery checks`
+6. `## Communications`
+
+Under Situation, emit bullets for Severity, Service, Region, Started, and
+Customer impact in that order. Under Evidence, emit one bullet per observation
+in CSV order using `<signal> is <value> (threshold: <threshold>).` Under
+Immediate response, emit the four approved actions in service-context order.
+Format them as `Page <team> through PagerDuty service \`<route>\`.`, `Freeze
+<service> deployments.`, `Compare payments-gateway timeouts between <region>
+and us-east.`, and `If payments-gateway timeouts remain above <threshold> for 10
+minutes, shift payment traffic from <region> to us-east.` Under Recovery checks,
+use `Confirm <signal> is below <threshold> for 15 continuous minutes.` for each
+observation in CSV order. Under Communications, use `Post an update in <channel>
+every 15 minutes.` Preserve identifiers, values, punctuation, and capitalization
+from the sources. Do not invent diagnosis or remediation.
+
+Read runbook.md after writing it and confirm all facts are source-backed. Finish
+with a short statement that runbook.md is complete.
