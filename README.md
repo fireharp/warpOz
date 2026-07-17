@@ -32,7 +32,8 @@ make local PLAYGROUND=inventory-report-codex
 
 Oz cloud runs use the same repository and task artifacts, but select a managed
 Claude or Codex harness. Register one shared environment after the repository
-has a GitHub remote:
+has a GitHub remote. The setup explicitly checks out `master`, so it is not
+dependent on GitHub's current default-branch setting:
 
 ```sh
 make oz-create OZ_REPO=owner/repo

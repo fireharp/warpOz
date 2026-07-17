@@ -14,6 +14,24 @@ FAKE_OZ = ROOT / "tests" / "fake-oz.sh"
 
 
 class PlaygroundCliTest(unittest.TestCase):
+    def test_oz_create_checks_out_master(self) -> None:
+        completed = subprocess.run(
+            [
+                str(CLI),
+                "oz-create",
+                "--repo",
+                "fireharp/warpOz",
+                "--dry-run",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stdout)
+        self.assertIn("git switch master", completed.stdout)
+
     def test_oz_run_is_observed_and_redacted(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             environment = dict(

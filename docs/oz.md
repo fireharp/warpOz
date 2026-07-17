@@ -15,15 +15,17 @@ byte-identical runtime.
 ## One-time setup
 
 1. Commit and push this repository to GitHub. Oz environments clone GitHub
-   repositories; `owner/repo` is therefore required.
+   repositories; `owner/repo` is therefore required. The canonical branch is
+   `master`.
 2. Register the personal environment:
 
    ```sh
    ./scripts/playground oz-create --repo owner/repo
    ```
 
-   This uses Warp's public `warpdotdev/dev-base:latest-agents` image, which
-   contains Claude Code and Codex, then validates all playground manifests.
+   This uses Warp's public `warpdotdev/dev-base:latest-agents` image, checks
+   out `master` after cloning, and validates all playground manifests. Pass
+   `--branch <name>` only when intentionally testing a different branch.
 3. Prefer authentication configured in the Oz environment. In the Oz UI this
    appears as **Skipped — using environment auth**; dispatch with:
 

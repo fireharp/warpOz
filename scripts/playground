@@ -257,6 +257,13 @@ def github_repo(value: str) -> str:
     raise CatalogError(f"cannot derive GitHub owner/repo from {value!r}")
 
 
+def git_branch(value: str) -> str:
+    branch = value.strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]*", branch):
+        raise CatalogError(f"invalid Git branch name: {value!r}")
+    return branch
+
+
 def command_list(_: argparse.Namespace) -> int:
     rows = []
     for name, (_, manifest) in load_catalog().items():
@@ -415,6 +422,7 @@ def command_oz_create(args: argparse.Namespace) -> int:
             raise CatalogError("pass --repo owner/repo, set OZ_REPO, or configure origin")
         repo_value = result.stdout
     repo = github_repo(repo_value)
+    branch = git_branch(args.branch)
     command = [
         oz_binary(),
         "environment",
@@ -428,6 +436,8 @@ def command_oz_create(args: argparse.Namespace) -> int:
         args.image,
         "--repo",
         repo,
+        "--setup-command",
+        f"git switch {branch}",
         "--setup-command",
         "python3 scripts/playground check --manifest-only",
         "--output-format",
@@ -470,6 +480,7 @@ def parser() -> argparse.ArgumentParser:
     create = sub.add_parser("oz-create", help="register the shared Oz environment")
     create.add_argument("--repo")
     create.add_argument("--name", default="warpoz-playgrounds")
+    create.add_argument("--branch", default="master")
     create.add_argument("--image", default="warpdotdev/dev-base:latest-agents")
     create.add_argument("--dry-run", action="store_true")
     create.set_defaults(func=command_oz_create)
